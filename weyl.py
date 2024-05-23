@@ -6,4 +6,3 @@ def weyl(roota: Root,rootb: Root):
     '''
     if roota.vect_array==rootb.vect_array:
         return mult_root(root,-1)
-    elif 
