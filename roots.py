@@ -1,0 +1,55 @@
+from basis_vectors import *
+from scalar_products import scalarp_roots
+
+class Root:
+    def __init__(self,coeffs: tuple, vect_array: Vector_array):
+        self.coeffs=coeffs
+        self.vect_array=vect_array
+        self.length=scalarp_roots(self,self)
+    
+    def reps(self):
+        res=''
+        if len(self.coeffs)==len(self.vect_array.vect_list):
+            for i in range(len(self.coeffs)):
+                if self.coeffs[i]!=0:
+                    if self.coeffs[i]>0:
+                        res+='+'
+                    res+=f'{self.coeffs[i]}*{self.vect_array.vect_list[i].reps()}'
+            if res:
+                return res.strip('+')
+            else:
+                raise ValueError
+        else:
+            raise ValueError
+    
+    def view(self):
+        print(self.reps())
+        
+def sum_root(root1: Root,root2: Root):
+    if len(root1.coeffs)==len(root2.coeffs) and root1.vect_array==root2.vect_array:
+        new_coeffs=[root1.coeffs[i]+root2.coeffs[i] for i in range(len(root2.coeffs))]
+        return Root(new_coeffs, root1.vect_array)
+    else:
+        raise ValueError
+    
+def mult_root(root: Root, scalar: float):
+    new_coeffs=[scalar*root.coeffs[i]for i in range(len(root.coeffs))]
+    return Root(new_coeffs, root.vect_array)
+
+v_arr=Vector_array((2,1))
+root=Root((1,3,1),v_arr)
+print('root1')
+root.view()
+print(root.length)
+root2=Root((2,1,1),v_arr)
+smroot=sum_root(root,root2)
+print('root2')
+
+root2.view()
+print(root2.length)
+
+print('root1+2')
+print(smroot.length)
+
+smroot.view()
+mult_root(root,-10).view()
