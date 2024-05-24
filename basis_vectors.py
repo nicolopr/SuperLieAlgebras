@@ -13,16 +13,7 @@ class Basis_vector:
     def view(self):
         print(self.reps())
 
-def vect_list(bosons_fermions: tuple[int,int]):
-        '''
-    Auxiliary function returning a list of basis vector objects given a tuple number of bosonic and fermionic directions. Used in Vector_array class
-    '''
-        vect_list=[]
-        for i in range(1,bosons_fermions[0]+1):
-            vect_list.append(Basis_vector(i,0))
-        for i in range(1,bosons_fermions[1]+1):
-            vect_list.append(Basis_vector(i,1))
-        return vect_list
+
 
 class Vector_array:
     '''
@@ -30,7 +21,7 @@ class Vector_array:
     '''
     def __init__(self, bosons_fermions: tuple[int,int]):
         self.bosons_fermions=bosons_fermions
-        self.vect_list=vect_list(bosons_fermions)
+        self.vect_list=self.vect_list()
     def reps(self):
         res=''
         for vect in self.vect_list:
@@ -39,3 +30,13 @@ class Vector_array:
         return res
     def view(self):
         print(self.reps())
+    def vect_list(self):
+        '''
+    Auxiliary function returning a list of basis vector objects given a tuple number of bosonic and fermionic directions. Used in Vector_array class
+    '''
+        vect_list=[]
+        for i in range(1,self.bosons_fermions[1]+1):
+            vect_list.append(Basis_vector(i,1))
+        for i in range(1,self.bosons_fermions[0]+1):
+            vect_list.append(Basis_vector(i,0))
+        return vect_list    
