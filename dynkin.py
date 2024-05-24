@@ -1,6 +1,7 @@
-from roots import *
+from roots import Root
 from weyl import weyl
-from basis_vectors import *
+from basis_vectors import Vector_array
+from scalar_products import scalarp_roots
 
 class Dynkin:
     def __init__(self,v_arr,root_list):
@@ -85,20 +86,3 @@ class Distinguished(Dynkin):
         coeff_tuple[-2]=1
         root_l.append(Root(tuple(coeff_tuple),self.v_arr))
         return root_l
-
-v_arr=Vector_array((2,1))
-dk=Distinguished(v_arr)
-dk.view()
-dk.print_cartan()
-
-dk2=dk.weyl_on_diagram(1)
-dk2.view()
-dk2.print_cartan()
-
-dk3=dk2.weyl_on_diagram(2)
-dk3.view()
-dk3.print_cartan()
-
-dk4=dk.weyl_on_diagram(2)
-dk4.view()
-dk4.print_cartan()

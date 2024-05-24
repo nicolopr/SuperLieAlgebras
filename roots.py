@@ -1,4 +1,4 @@
-from basis_vectors import *
+from basis_vectors import Vector_array
 from scalar_products import scalarp_roots
 
 class Root:
@@ -14,7 +14,12 @@ class Root:
                 if self.coeffs[i]!=0:
                     if self.coeffs[i]>0:
                         res+='+'
-                    res+=f'{self.coeffs[i]}*{self.vect_array.vect_list[i].reps()}'
+                    if abs(self.coeffs[i])>1:
+                        res+=f'{int(self.coeffs[i])}*{self.vect_array.vect_list[i].reps()}'
+                    elif self.coeffs[i]==1:
+                        res+=f'{self.vect_array.vect_list[i].reps()}'
+                    elif self.coeffs[i]==-1:
+                        res+=f'-{self.vect_array.vect_list[i].reps()}'
             if res:
                 return res.strip('+')
             else:

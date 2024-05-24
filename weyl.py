@@ -1,4 +1,4 @@
-from roots import *
+from roots import Root, sum_root, mult_root
 from scalar_products import scalarp_roots
 
 def weyl(roota: Root,rootb: Root):
@@ -18,8 +18,3 @@ def weyl(roota: Root,rootb: Root):
                 return sum_root(roota,rootb)
     else:
         raise ValueError
-
-v_arr=Vector_array((2,1))
-root=Root((1,-1,0),v_arr)
-root2=Root((1,1,0),v_arr)
-root3=Root((0,1,1),v_arr)
