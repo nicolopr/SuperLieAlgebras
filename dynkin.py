@@ -2,14 +2,17 @@ from roots import Root
 from weyl import weyl
 from basis_vectors import Vector_array
 from scalar_products import scalarp_roots
+from travel_diagrams import travel
 
 class Dynkin:
     def __init__(self,v_arr,root_list):
         self.v_arr=v_arr
         self.vect_list=v_arr.vect_list
         self.root_list=root_list
+        self.roots_coeffs=self.roots_coeffs()
         self.reps=self.reps()
         self.cartan_matrix=self.cartan_matrix()
+
     def reps(self):
         diagram=''
         roots=''
@@ -21,6 +24,13 @@ class Dynkin:
             diagram+='    '
             roots+=element.reps()+'    '
         return diagram,roots
+    
+    def roots_coeffs(self):
+        root_coeffs=[]
+        for root in self.root_list:
+            root_coeffs.append(root.coeffs)
+        return root_coeffs
+    
     def view(self):
         print(self.reps[0])
         print(self.reps[1])
@@ -36,6 +46,7 @@ class Dynkin:
             new_row=[int(to_mult*el) for el in row]
             norm_cartan.append(new_row)
         return norm_cartan
+
     def cartan_matrix(self):
         matrix=[]
         for root1 in self.root_list:
@@ -58,6 +69,7 @@ class Dynkin:
     def print_cartan(self):
         for row in self.cartan_matrix:
             print(row)
+
     def weyl_on_diagram(self,root_i):
         new_root_list=[]
         if root_i>len(self.root_list):
@@ -67,6 +79,15 @@ class Dynkin:
             new_root_list.append(weyl(refl_root,element))
         return Dynkin(self.v_arr,new_root_list)
     
+    def find_Q1(self):
+        coeffs=self.roots_coeffs
+        index=intersect_roots(coeffs[0],coeffs[1])
+        if not index:
+            index=intersect_roots(coeffs[0],coeffs[2])
+        if index[0][0]==1:
+            return f'Q()|({index[0][1]})'
+        return f'Q ({index[0][1]})|()'
+
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
         self.v_arr=v_arr
@@ -86,3 +107,20 @@ class Distinguished(Dynkin):
         coeff_tuple[-2]=1
         root_l.append(Root(tuple(coeff_tuple),self.v_arr))
         return root_l
+    
+#auxiliary functions
+def invert(tuples):
+    list=[]
+    for i in range(len(tuples)):
+        list.append(-tuples[i])
+    return list
+
+def intersect_roots(list1,list2):
+    listinv=invert(list2)
+    list=[]
+    if len(list1)!=len(listinv):
+        raise ValueError
+    for i in range(len(list1)):
+        if listinv[i]==list1[i] and listinv[i]!=0:
+            list.append((i+1,list1[i]))
+    return list
