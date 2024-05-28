@@ -3,6 +3,7 @@ from weyl import weyl
 from basis_vectors import Vector_array
 from scalar_products import scalarp_roots
 from travel_diagrams import travel
+from copy import deepcopy
 
 class Dynkin:
     def __init__(self,v_arr,root_list):
@@ -12,6 +13,7 @@ class Dynkin:
         self.roots_coeffs=self.roots_coeffs()
         self.reps=self.reps()
         self.cartan_matrix=self.cartan_matrix()
+        self.Q1=self.find_Q1()
 
     def reps(self):
         diagram=''
@@ -79,14 +81,118 @@ class Dynkin:
             new_root_list.append(weyl(refl_root,element))
         return Dynkin(self.v_arr,new_root_list)
     
+    def Q_indices(self):
+        unique_vectors,indices=[],[]
+        bosons=self.v_arr.bosons_fermions[0]
+        fermions=self.v_arr.bosons_fermions[1]
+        #gl-type tail
+        for i in range(bosons+fermions-3):
+            unique_vectors.append(unique_elements(self.root_list[i].coeffs,self.root_list[i+1].coeffs))
+        for element in unique_vectors:
+            no_vector, value_vector=find_nonzero(element)
+            indices_vector=deepcopy(indices[-1]) if indices else [[],[]]
+            if no_vector>=fermions:
+                if value_vector>0:
+                    indices_vector[0].append(f'{no_vector-fermions+1}')
+                elif value_vector<0:
+                    indices_vector[0].append(f"{no_vector-fermions+1}'")
+            else:
+                if value_vector>0:
+                    indices_vector[-1].append(f'{no_vector+1}')
+                elif value_vector<0:
+                    indices_vector[-1].append(f"{no_vector+1}'")
+            indices.append(indices_vector)
+        #fork node
+        return indices
+
+
     def find_Q1(self):
         coeffs=self.roots_coeffs
-        index=intersect_roots(coeffs[0],coeffs[1])
-        if not index:
-            index=intersect_roots(coeffs[0],coeffs[2])
-        if index[0][0]==1:
-            return f'Q()|({index[0][1]})'
-        return f'Q ({index[0][1]})|()'
+        common_index=intersect_roots(coeffs[0],coeffs[1])
+        if not common_index:
+            common_index=intersect_roots(coeffs[0],coeffs[2])
+        for i,n in enumerate(coeffs[0]):
+            if i!=common_index[0] and n!=0:
+                index=(i,n)
+        # print(index)
+        if index[0]==0:
+            if index[1]==1:
+                return (set(),set(['1']))
+            elif index[1]==-1:
+                return (set(),set(["1'"]))
+        elif index[0]==1:
+            if index[1]==1:
+                return (set(['1']),set())
+            elif index[1]==-1:
+                return (set(["1'"]),set())
+        elif index[0]==2:
+            if index[1]==1:
+                return (set(['2']),set())
+            elif index[1]==-1:
+                return (set(["2'"]),set())
+    
+    def findSplusminus(self):
+        #to be debugged
+        Sp=self.Q1
+        Sm=self.Q1
+        coeffs=self.roots_coeffs
+        common_index=intersect_roots(coeffs[0],coeffs[1])
+        if not common_index:
+            common_index=intersect_roots(coeffs[0],coeffs[2])
+        for i,n in enumerate(coeffs[1]):
+            if i!=common_index[0] and n!=0:
+                not_common_index=(i,n)
+        if 2 not in coeffs[1] or -2 not in coeffs[1]:
+            #root 2 is not of sp type
+            #first index adding
+            if common_index[0]==0:
+                if coeffs[1][common_index[0]]==1:
+                    Sp[1].add('1')
+                elif coeffs[1][common_index[0]]==-1:
+                    Sp[1].add("1'")
+            else:
+                if coeffs[1][common_index[0]]==1:
+                    Sp[0].add(f'{common_index[0]}')
+                elif coeffs[1][common_index[0]]==-1:
+                    Sp[0].add(f"{common_index[0]}'")
+            print(not_common_index)
+            #adding second index
+            if not_common_index[0]==0:
+                if not_common_index[1]==1:
+                    Sp[1].add('1')
+                elif not_common_index[1]==-1:
+                    Sp[1].add("1'")
+            else:
+                if not_common_index[1]==-1:
+                    Sp[0].add(f'{not_common_index[0]}')
+                elif not_common_index[1]==1:
+                    Sp[0].add(f"{not_common_index[0]}'")
+        else:
+            #root 2 is not of sp type
+            #first index adding
+            if common_index[0]==0:
+                if coeffs[1][common_index[0]]==1:
+                    Sm[1].add('1')
+                elif coeffs[1][common_index[0]]==-1:
+                    Sm[1].add("1'")
+            else:
+                if coeffs[1][common_index[0]]==1:
+                    Sm[0].add(f'{common_index[0]}')
+                elif coeffs[1][common_index[0]]==-1:
+                    Sm[0].add(f"{common_index[0]}'")
+            #second index adding
+            if not_common_index[0]==0:
+                if not_common_index[1]==-1:
+                    Sm[1].add('1')
+                elif not_common_index[1]==1:
+                    Sm[1].add("1'")
+            else:
+                if not_common_index[1]==-1:
+                    Sm[0].add(f'{not_common_index[0]}')
+                elif not_common_index[1]==1:
+                    Sm[0].add(f"{not_common_index[0]}'")
+        return Sp
+        
 
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
@@ -122,5 +228,26 @@ def intersect_roots(list1,list2):
         raise ValueError
     for i in range(len(list1)):
         if listinv[i]==list1[i] and listinv[i]!=0:
-            list.append((i+1,list1[i]))
+            list.append(i)
     return list
+
+def unique_elements(list1, list2):
+    list_return=list1.copy()
+    for i in range(len(list_return)):
+        if list_return[i]==-list2[i]:
+            list_return[i]=0
+        else:
+            list_return[i]=int(list_return[i])
+    return list_return
+
+def find_nonzero(list):
+    for i,element in enumerate(list):
+        if element!=0:
+            return i,element
+
+vector_array=Vector_array((3,2))
+distinguished=Distinguished(vector_array)
+visited=travel(distinguished)
+for element in visited[:100]:
+    element.view()
+    print(element.Q_indices())
