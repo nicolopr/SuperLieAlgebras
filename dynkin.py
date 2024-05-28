@@ -11,31 +11,25 @@ class Dynkin:
         self.vect_list=v_arr.vect_list
         self.root_list=root_list
         self.roots_coeffs=self.roots_coeffs()
+        self.Qindices = self.Q_indices_reorder()
         self.reps=self.reps()
         self.cartan_matrix=self.cartan_matrix()
-        self.Q1=self.find_Q1()
-
-    def reps(self):
-        diagram=''
-        roots=''
-        for element in self.root_list:
-            if element.length==0:
-                diagram+='X'
-            else:
-                diagram+='    O    '
-            diagram+='    '
-            roots+=element.reps()+'    '
-        return diagram,roots
     
+    def write_indices_Q(self,list_indices,root_number):
+        string='Q(' if root_number<=sum(self.v_arr.bosons_fermions)-2 else 'S('
+        for index in list_indices[0]:
+            string+=index
+        string+=')|('
+        for index in list_indices[1]:
+            string+=index
+        return string+')'
+
+
     def roots_coeffs(self):
         root_coeffs=[]
         for root in self.root_list:
             root_coeffs.append(root.coeffs)
         return root_coeffs
-    
-    def view(self):
-        print(self.reps[0])
-        print(self.reps[1])
 
     def normalise_cartan(self,cartan_matrix):
         norm_cartan=[]
@@ -89,110 +83,63 @@ class Dynkin:
         for i in range(bosons+fermions-3):
             unique_vectors.append(unique_elements(self.root_list[i].coeffs,self.root_list[i+1].coeffs))
         for element in unique_vectors:
-            no_vector, value_vector=find_nonzero(element)
-            indices_vector=deepcopy(indices[-1]) if indices else [[],[]]
-            if no_vector>=fermions:
-                if value_vector>0:
-                    indices_vector[0].append(f'{no_vector-fermions+1}')
-                elif value_vector<0:
-                    indices_vector[0].append(f"{no_vector-fermions+1}'")
-            else:
-                if value_vector>0:
-                    indices_vector[-1].append(f'{no_vector+1}')
-                elif value_vector<0:
-                    indices_vector[-1].append(f"{no_vector+1}'")
-            indices.append(indices_vector)
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,element))
         #fork node
-        return indices
-
-
-    def find_Q1(self):
-        coeffs=self.roots_coeffs
-        common_index=intersect_roots(coeffs[0],coeffs[1])
-        if not common_index:
-            common_index=intersect_roots(coeffs[0],coeffs[2])
-        for i,n in enumerate(coeffs[0]):
-            if i!=common_index[0] and n!=0:
-                index=(i,n)
-        # print(index)
-        if index[0]==0:
-            if index[1]==1:
-                return (set(),set(['1']))
-            elif index[1]==-1:
-                return (set(),set(["1'"]))
-        elif index[0]==1:
-            if index[1]==1:
-                return (set(['1']),set())
-            elif index[1]==-1:
-                return (set(["1'"]),set())
-        elif index[0]==2:
-            if index[1]==1:
-                return (set(['2']),set())
-            elif index[1]==-1:
-                return (set(["2'"]),set())
-    
-    def findSplusminus(self):
-        #to be debugged
-        Sp=self.Q1
-        Sm=self.Q1
-        coeffs=self.roots_coeffs
-        common_index=intersect_roots(coeffs[0],coeffs[1])
-        if not common_index:
-            common_index=intersect_roots(coeffs[0],coeffs[2])
-        for i,n in enumerate(coeffs[1]):
-            if i!=common_index[0] and n!=0:
-                not_common_index=(i,n)
-        if 2 not in coeffs[1] or -2 not in coeffs[1]:
-            #root 2 is not of sp type
-            #first index adding
-            if common_index[0]==0:
-                if coeffs[1][common_index[0]]==1:
-                    Sp[1].add('1')
-                elif coeffs[1][common_index[0]]==-1:
-                    Sp[1].add("1'")
-            else:
-                if coeffs[1][common_index[0]]==1:
-                    Sp[0].add(f'{common_index[0]}')
-                elif coeffs[1][common_index[0]]==-1:
-                    Sp[0].add(f"{common_index[0]}'")
-            print(not_common_index)
-            #adding second index
-            if not_common_index[0]==0:
-                if not_common_index[1]==1:
-                    Sp[1].add('1')
-                elif not_common_index[1]==-1:
-                    Sp[1].add("1'")
-            else:
-                if not_common_index[1]==-1:
-                    Sp[0].add(f'{not_common_index[0]}')
-                elif not_common_index[1]==1:
-                    Sp[0].add(f"{not_common_index[0]}'")
+        fork_node=bosons+fermions-3
+        if 2 not in self.root_list[fork_node+1].coeffs and -2 not in self.root_list[fork_node+1].coeffs:
+            #S+ node is not a long root
+            unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs))
         else:
-            #root 2 is not of sp type
-            #first index adding
-            if common_index[0]==0:
-                if coeffs[1][common_index[0]]==1:
-                    Sm[1].add('1')
-                elif coeffs[1][common_index[0]]==-1:
-                    Sm[1].add("1'")
+            unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+2].coeffs))
+        indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1]))
+        #spinor nodes
+        if 2 not in self.root_list[fork_node+1].coeffs and -2 not in self.root_list[fork_node+1].coeffs:
+            #S+ node is not a long root
+            not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs)
+            unique_elements_sm=unique_elements(self.root_list[fork_node+1].coeffs,self.root_list[fork_node].coeffs)
+            unique_elements_sp=[-el for el in unique_elements_sm]
+            temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
+        else:
+            #S+ node is a long root
+            #terrible naming conventions here
+            not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+2].coeffs)
+            unique_elements_sm=unique_elements(self.root_list[fork_node+2].coeffs,self.root_list[fork_node].coeffs)
+            unique_elements_sp=[-el for el in unique_elements_sm]
+            temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
+        return indices
+    
+    def Q_indices_reorder(self):
+        Q_reordered=[]
+        for Q_fun in self.Q_indices():
+            new_Qfun=[]
+            for set_indices in Q_fun:
+                new_Qfun.append(sorted(set_indices))
+            Q_reordered.append(new_Qfun)
+        return Q_reordered
+    
+    def reps(self):
+        diagram=''
+        roots=''
+        Q_f=''
+        Qindex=self.Qindices
+        for root_number,element in enumerate(self.root_list):
+            if element.length==0:
+                diagram+='X'
             else:
-                if coeffs[1][common_index[0]]==1:
-                    Sm[0].add(f'{common_index[0]}')
-                elif coeffs[1][common_index[0]]==-1:
-                    Sm[0].add(f"{common_index[0]}'")
-            #second index adding
-            if not_common_index[0]==0:
-                if not_common_index[1]==-1:
-                    Sm[1].add('1')
-                elif not_common_index[1]==1:
-                    Sm[1].add("1'")
-            else:
-                if not_common_index[1]==-1:
-                    Sm[0].add(f'{not_common_index[0]}')
-                elif not_common_index[1]==1:
-                    Sm[0].add(f"{not_common_index[0]}'")
-        return Sp
-        
+                diagram+='    O    '
+            diagram+='    '
+            roots+=element.reps()+'    '
+            Q_f+=self.write_indices_Q(Qindex[root_number],root_number)+'  '
+        return diagram,roots,Q_f
+    
+    def view(self):
+        print(self.reps[0])
+        print(self.reps[1])
+        print(self.reps[2])
 
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
@@ -232,7 +179,7 @@ def intersect_roots(list1,list2):
     return list
 
 def unique_elements(list1, list2):
-    list_return=list1.copy()
+    list_return=list(list1).copy()
     for i in range(len(list_return)):
         if list_return[i]==-list2[i]:
             list_return[i]=0
@@ -240,14 +187,38 @@ def unique_elements(list1, list2):
             list_return[i]=int(list_return[i])
     return list_return
 
+def not_unique_elements(list1, list2):
+    list_return=list(list1).copy()
+    for i in range(len(list_return)):
+        if list_return[i]!=-list2[i]:
+            list_return[i]=0
+        else:
+            list_return[i]=-int(list_return[i])
+    return list_return
+
 def find_nonzero(list):
     for i,element in enumerate(list):
         if element!=0:
             return i,element
 
-vector_array=Vector_array((3,2))
-distinguished=Distinguished(vector_array)
-visited=travel(distinguished)
-for element in visited[:100]:
-    element.view()
-    print(element.Q_indices())
+def get_indices_from_unique_vectors(bosons,fermions,indices,unique_vector):
+    no_vector, value_vector=find_nonzero(unique_vector)
+    indices_vector=deepcopy(indices[-1]) if indices else [[],[]]
+    if no_vector>=fermions:
+        if value_vector>0:
+            indices_vector[0].append(f'{no_vector-fermions+1}')
+        elif value_vector<0:
+            indices_vector[0].append(f"{no_vector-fermions+1}'")
+    else:
+        if value_vector>0:
+            indices_vector[-1].append(f'{no_vector+1}')
+        elif value_vector<0:
+            indices_vector[-1].append(f"{no_vector+1}'")
+    return indices_vector
+
+# vector_array=Vector_array((3,2))
+# distinguished=Distinguished(vector_array)
+# visited=travel(distinguished)
+# distinguished.Q_indices()
+# for element in visited[:100]:
+#     element.view()
