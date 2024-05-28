@@ -29,7 +29,7 @@ class Dynkin:
         list=[]
         for i,node in enumerate(self.Qindices):
             list.append(self.write_indices_Q(node,i))
-        print(list)
+        return list
 
 
     def roots_coeffs(self):
