@@ -16,7 +16,7 @@ class Dynkin:
         self.cartan_matrix=self.cartan_matrix()
     
     def write_indices_Q(self,list_indices,root_number):
-        string='Q(' if root_number<=sum(self.v_arr.bosons_fermions)-2 else 'S('
+        string='Q(' if root_number<sum(self.v_arr.bosons_fermions)-2 else 'S('
         for index in list_indices[0]:
             string+=index
         string+=')|('
