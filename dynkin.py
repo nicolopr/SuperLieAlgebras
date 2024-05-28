@@ -108,8 +108,8 @@ class Dynkin:
             unique_elements_sm=unique_elements(self.root_list[fork_node+2].coeffs,self.root_list[fork_node].coeffs)
             unique_elements_sp=[-el for el in unique_elements_sm]
             temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
             indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
         return indices
     
     def Q_indices_reorder(self):
