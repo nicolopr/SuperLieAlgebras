@@ -12,6 +12,7 @@ class Dynkin:
         self.root_list=root_list
         self.roots_coeffs=self.roots_coeffs()
         self.Qindices = self.Q_indices_reorder()
+        self.Qvector=self.Q_vector_reps()
         self.reps=self.reps()
         self.cartan_matrix=self.cartan_matrix()
     
@@ -23,6 +24,12 @@ class Dynkin:
         for index in list_indices[1]:
             string+=index
         return string+')'
+
+    def Q_vector_reps(self):
+        list=[]
+        for i,node in enumerate(self.Qindices):
+            list.append(self.write_indices_Q(node,i))
+        print(list)
 
 
     def roots_coeffs(self):
