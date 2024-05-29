@@ -5,11 +5,88 @@ from scalar_products import scalarp_roots
 from travel_diagrams import travel
 from copy import deepcopy
 
+#auxiliary functions
+def invert(tuples):
+    list=[]
+    for i in range(len(tuples)):
+        list.append(-tuples[i])
+    return list
+
+def intersect_roots(list1,list2):
+    listinv=invert(list2)
+    list=[]
+    if len(list1)!=len(listinv):
+        raise ValueError
+    for i in range(len(list1)):
+        if listinv[i]==list1[i] and listinv[i]!=0:
+            list.append(i)
+    return list
+
+def unique_elements(list1, list2):
+    list_return=list(list1).copy()
+    for i in range(len(list_return)):
+        if list_return[i]==-list2[i]:
+            list_return[i]=0
+        else:
+            list_return[i]=int(list_return[i])
+    return list_return
+
+def not_unique_elements(list1, list2):
+    list_return=list(list1).copy()
+    for i in range(len(list_return)):
+        if list_return[i]!=-list2[i]:
+            list_return[i]=0
+        else:
+            list_return[i]=-int(list_return[i])
+    return list_return
+
+def find_nonzero(list):
+    for i,element in enumerate(list):
+        if element!=0:
+            return i,element
+
+def get_indices_from_unique_vectors(bosons,fermions,indices,unique_vector):
+    no_vector, value_vector=find_nonzero(unique_vector)
+    indices_vector=deepcopy(indices[-1]) if indices else [[],[]]
+    if no_vector>=fermions:
+        if value_vector>0:
+            indices_vector[0].append(f'{no_vector-fermions+1}')
+        elif value_vector<0:
+            indices_vector[0].append(f"{no_vector-fermions+1}'")
+    else:
+        if value_vector>0:
+            indices_vector[-1].append(f'{no_vector+1}')
+        elif value_vector<0:
+            indices_vector[-1].append(f"{no_vector+1}'")
+    return indices_vector
+
+def reorder(root_list):
+        root_list_cp=deepcopy(root_list)
+        if 2 in root_list[-2].coeffs or -2 in root_list[-2].coeffs:
+            #reorder long-root in sp diagrams
+            temp_root=root_list_cp[-2]
+            root_list_cp[-2]=root_list_cp[-1]
+            root_list_cp[-1]=temp_root
+        elif 2 not in root_list[-1].coeffs and -2 not in root_list[-1].coeffs:
+            #need to reorder so that last node in S- node, but avoid that if diagram is sp-type
+            common_coeff_to_fork=not_unique_elements(root_list[-3].coeffs,root_list[-2].coeffs)
+            plus_or_minus_one=[coeff for coeff in common_coeff_to_fork if coeff!=0][0]
+            position_of_common=common_coeff_to_fork.index(plus_or_minus_one)
+            temp_list=deepcopy(list(root_list[-2].coeffs))
+            temp_list.pop(position_of_common)
+            plus_or_minus_one2=[el for el in temp_list if el!=0][0]
+            if plus_or_minus_one*plus_or_minus_one2>0:
+                #node -2 is S- node, invert it with S+
+                temp_root=root_list_cp[-2]
+                root_list_cp[-2]=root_list_cp[-1]
+                root_list_cp[-1]=temp_root
+        return root_list_cp
+
 class Dynkin:
-    def __init__(self,v_arr,root_list):
+    def __init__(self,v_arr,rootlist):
         self.v_arr=v_arr
         self.vect_list=v_arr.vect_list
-        self.root_list=root_list
+        self.root_list=reorder(rootlist)
         self.roots_coeffs=self.roots_coeffs()
         self.Qindices = self.Q_indices_reorder()
         self.Qvector=self.Q_vector_reps()
@@ -74,13 +151,14 @@ class Dynkin:
             print(row)
 
     def weyl_on_diagram(self,root_i):
+        new_varr=self.v_arr
         new_root_list=[]
         if root_i>len(self.root_list):
             raise ValueError
         refl_root=self.root_list[root_i-1]
         for element in self.root_list:
             new_root_list.append(weyl(refl_root,element))
-        return Dynkin(self.v_arr,new_root_list)
+        return Dynkin(new_varr,reorder(new_root_list))
     
     def Q_indices(self):
         unique_vectors,indices=[],[]
@@ -148,6 +226,24 @@ class Dynkin:
         print(self.reps[1])
         print(self.reps[2])
 
+    def QQ_relation(self, node_number):
+        #wip
+        new_diagram=self.weyl_on_diagram(node_number)
+        wronskian1=self.Qvector[node_number-1]
+        wronskian2=new_diagram.Qvector[node_number-1]
+        print('W[',wronskian1,wronskian2,']')
+        if node_number==1:
+            print('Q()|()',self.Qvector[node_number])
+        if node_number<sum(self.v_arr.bosons_fermions)-2:
+            #gl tail
+            print(self.Qvector[node_number-2],self.Qvector[node_number])
+        if node_number==sum(self.v_arr.bosons_fermions)-2:
+            #fork
+            print(self.Qvector[node_number-2],self.Qvector[node_number],self.Qvector[node_number+1])
+        if node_number>sum(self.v_arr.bosons_fermions)-2:
+            #spinors
+            print(self.Qvector[node_number-2],self.Qvector[node_number],self.Qvector[node_number+1])
+
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
         self.v_arr=v_arr
@@ -167,65 +263,11 @@ class Distinguished(Dynkin):
         coeff_tuple[-2]=1
         root_l.append(Root(tuple(coeff_tuple),self.v_arr))
         return root_l
-    
-#auxiliary functions
-def invert(tuples):
-    list=[]
-    for i in range(len(tuples)):
-        list.append(-tuples[i])
-    return list
-
-def intersect_roots(list1,list2):
-    listinv=invert(list2)
-    list=[]
-    if len(list1)!=len(listinv):
-        raise ValueError
-    for i in range(len(list1)):
-        if listinv[i]==list1[i] and listinv[i]!=0:
-            list.append(i)
-    return list
-
-def unique_elements(list1, list2):
-    list_return=list(list1).copy()
-    for i in range(len(list_return)):
-        if list_return[i]==-list2[i]:
-            list_return[i]=0
-        else:
-            list_return[i]=int(list_return[i])
-    return list_return
-
-def not_unique_elements(list1, list2):
-    list_return=list(list1).copy()
-    for i in range(len(list_return)):
-        if list_return[i]!=-list2[i]:
-            list_return[i]=0
-        else:
-            list_return[i]=-int(list_return[i])
-    return list_return
-
-def find_nonzero(list):
-    for i,element in enumerate(list):
-        if element!=0:
-            return i,element
-
-def get_indices_from_unique_vectors(bosons,fermions,indices,unique_vector):
-    no_vector, value_vector=find_nonzero(unique_vector)
-    indices_vector=deepcopy(indices[-1]) if indices else [[],[]]
-    if no_vector>=fermions:
-        if value_vector>0:
-            indices_vector[0].append(f'{no_vector-fermions+1}')
-        elif value_vector<0:
-            indices_vector[0].append(f"{no_vector-fermions+1}'")
-    else:
-        if value_vector>0:
-            indices_vector[-1].append(f'{no_vector+1}')
-        elif value_vector<0:
-            indices_vector[-1].append(f"{no_vector+1}'")
-    return indices_vector
-
 # vector_array=Vector_array((3,2))
 # distinguished=Distinguished(vector_array)
-# visited=travel(distinguished)
-# distinguished.Q_indices()
-# for element in visited[:100]:
-#     element.view()
+# # distinguished.view()
+# # distinguished.weyl_on_diagram(2).view()
+
+# distinguished.QQ_relation(2)
+# distinguished.QQ_relation(3)
+
