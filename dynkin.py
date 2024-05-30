@@ -248,23 +248,44 @@ class Dynkin:
         print(self.reps[2])
 
     def QQ_relation(self, node_number):
-        #wip
+        node_position=node_number-1
         new_diagram=self.weyl_on_diagram(node_number)
-        wronskian1=self.Qvector[node_number-1]
-        wronskian2=new_diagram.Qvector[node_number-1]
-        print('W[',wronskian1,wronskian2,']')
-        if node_number==1:
-            print('Q()|()',self.Qvector[node_number])
-        if node_number<sum(self.v_arr.bosons_fermions)-2:
+        if self.root_list[node_position].length!=0:
+            #bosonic QQ relation
+            wronskian1=self.Qvector[node_position]
+            wronskian2=new_diagram.Qvector[node_position]
+            
+            if node_number==1:
+                LHS=['Q()|()',self.Qvector[node_position+1]]
+            elif node_number<sum(self.v_arr.bosons_fermions)-2:
             #gl tail
-            print(self.Qvector[node_number-2],self.Qvector[node_number])
-        if node_number==sum(self.v_arr.bosons_fermions)-2:
-            #fork
-            print(self.Qvector[node_number-2],self.Qvector[node_number],self.Qvector[node_number+1])
-        if node_number>sum(self.v_arr.bosons_fermions)-2:
-            #spinors
-            print(self.Qvector[node_number-2],self.Qvector[node_number],self.Qvector[node_number+1])
-
+                LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
+            elif node_number==sum(self.v_arr.bosons_fermions)-2:
+                #fork
+                LHS=[self.Qvector[node_position-1],self.Qvector[node_position],self.Qvector[node_position+1]]
+            elif node_number==sum(self.v_arr.bosons_fermions)-1:
+                #spinor +
+                wronskian1=self.Qvector[node_position+1]
+                wronskian2=new_diagram.Qvector[node_position+1]
+                LHS=[self.Qvector[node_position-1]]    
+            elif node_number==sum(self.v_arr.bosons_fermions):
+                #spinor -
+                if 2 not in self.root_list[node_position].coeffs and -2 not in self.root_list[node_position].coeffs:
+                    #not a long root
+                    wronskian1=self.Qvector[node_position-1]
+                    wronskian2=new_diagram.Qvector[node_position-1]
+                    LHS=[self.Qvector[node_position-2]] 
+                else:
+                    #long root
+                    wronskian1=self.Qvector[node_position]
+                    wronskian2=new_diagram.Qvector[node_position]
+                    LHS=[self.Qvector[node_position-1]]   
+            RHS=(wronskian1,wronskian2)
+        else:
+            pass
+            #fermionic QQ relations
+        
+        print(f'W{RHS}={"*".join(LHS)}')
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
         self.v_arr=v_arr
