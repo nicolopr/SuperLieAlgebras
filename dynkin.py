@@ -254,13 +254,13 @@ class Dynkin:
             #bosonic QQ relation
             wronskian1=self.Qvector[node_position]
             wronskian2=new_diagram.Qvector[node_position]
-            
-            if node_number==1:
-                LHS=['Q()|()',self.Qvector[node_position+1]]
-            elif node_number<sum(self.v_arr.bosons_fermions)-2:
+            if sum(self.v_arr.bosons_fermions)>3:
+                if node_number==1:
+                    LHS=['Q()|()',self.Qvector[node_position+1]]
+                elif node_number<sum(self.v_arr.bosons_fermions)-2:
             #gl tail
-                LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
-            elif node_number==sum(self.v_arr.bosons_fermions)-2:
+                    LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
+            if node_number==sum(self.v_arr.bosons_fermions)-2:
                 #fork
                 LHS=[self.Qvector[node_position-1],self.Qvector[node_position],self.Qvector[node_position+1]]
             elif node_number==sum(self.v_arr.bosons_fermions)-1:
@@ -281,11 +281,33 @@ class Dynkin:
                     wronskian2=new_diagram.Qvector[node_position]
                     LHS=[self.Qvector[node_position-1]]   
             RHS=(wronskian1,wronskian2)
+            print(f'W{RHS}={"*".join(LHS)}')
         else:
-            pass
             #fermionic QQ relations
+            term1=self.Qvector[node_position]
+            term2=new_diagram.Qvector[node_position]
+            if sum(self.v_arr.bosons_fermions)>3:
+                if node_number==1:
+                    RHS=['Q()|()',self.Qvector[node_position+1]]
+                elif node_number<sum(self.v_arr.bosons_fermions)-2:
+            #gl tail
+                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
+            if node_number==sum(self.v_arr.bosons_fermions)-2:
+                #fork
+                RHS=[self.Qvector[node_position+1],self.Qvector[node_position+2]]
+            elif node_number==sum(self.v_arr.bosons_fermions)-1:
+                #spinor +
+                term1=self.Qvector[node_position+1]
+                term2=new_diagram.Qvector[node_position+1]
+                RHS=[self.Qvector[node_position-1],self.Qvector[node_position]]    
+            elif node_number==sum(self.v_arr.bosons_fermions):
+                #spinor -
+                term1=self.Qvector[node_position-1]
+                term2=new_diagram.Qvector[node_position]
+                RHS=[self.Qvector[node_position-2],self.Qvector[node_position]]
+            LHS=(term1,term2)
+            print(f'W{LHS}={"*".join(RHS)}')
         
-        print(f'W{RHS}={"*".join(LHS)}')
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
         self.v_arr=v_arr
