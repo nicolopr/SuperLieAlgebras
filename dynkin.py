@@ -94,13 +94,34 @@ class Dynkin:
         self.cartan_matrix=self.cartan_matrix()
     
     def write_indices_Q(self,list_indices,root_number):
-        string='Q(' if root_number<sum(self.v_arr.bosons_fermions)-2 else 'S('
-        for index in list_indices[0]:
-            string+=index
-        string+=')|('
-        for index in list_indices[1]:
-            string+=index
-        return string+')'
+        #no long roots
+        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
+            string='Q(' if root_number<sum(self.v_arr.bosons_fermions)-2 else 'S('
+            for index in list_indices[0]:
+                string+=index
+            string+=')|('
+            for index in list_indices[1]:
+                string+=index
+            return string+')'
+        else:
+            string='Q(' if root_number<sum(self.v_arr.bosons_fermions)-1 else 'S('
+            if root_number!=sum(self.v_arr.bosons_fermions)-2:
+                for index in list_indices[0]:
+                    string+=index
+                string+=')|('
+                for index in list_indices[1]:
+                    string+=index
+            else:
+                list_indices_sp=self.Qindices[-2]
+                list_indices_sm=self.Qindices[-1]
+                common_index_bosons=[element for element in list_indices_sp[0] if element in list_indices_sm[0]]
+                common_index_fermions=[element for element in list_indices_sp[1] if element in list_indices_sm[1]]
+                for index in common_index_bosons:
+                    string+=index
+                string+=')|('
+                for index in common_index_fermions:
+                    string+=index
+            return string+')'
 
     def Q_vector_reps(self):
         list=[]
