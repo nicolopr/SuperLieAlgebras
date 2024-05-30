@@ -15,6 +15,19 @@ def travel(diagram):
                 diagrams_to_transform.append(new_diag)
     return visited_diagrams
 
+def find_Qfunctions(visited_diagrams):
+    Q_functions=[]
+    for diagram in visited_diagrams:
+        skip=False
+        if 2 in diagram.root_list[-1].coeffs or -2 in diagram.root_list[-1].coeffs:
+            #skip long roots diagram
+            skip=True
+        for Q_function in diagram.Qvector:
+            if Q_function not in Q_functions and not skip:
+                Q_functions.append(Q_function)
+    return Q_functions 
+
+
 def print_visited(visited):
     for element in visited:
         element.view()
