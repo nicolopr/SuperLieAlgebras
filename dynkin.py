@@ -303,14 +303,20 @@ class Dynkin:
                     RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1],self.Qvector[node_position+2]]
             elif node_number==sum(self.v_arr.bosons_fermions)-1:
                 #spinor +
-                term1=self.Qvector[node_position+1]
-                term2=new_diagram.Qvector[node_position+1]
-                RHS=[self.Qvector[node_position-1],self.Qvector[node_position]]    
+                if 2 not in self.root_list[node_position+1].coeffs and -2 not in self.root_list[node_position+1].coeffs:
+                    #not sp diagram
+                    term1=self.Qvector[node_position-1]
+                    term2=self.Qvector[node_position+1]
+                    RHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
+                else:
+                    term1=self.Qvector[node_position-1]
+                    term2=self.Qvector[node_position+1]
+                    RHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
             elif node_number==sum(self.v_arr.bosons_fermions):
                 #spinor -
-                term1=self.Qvector[node_position-1]
-                term2=new_diagram.Qvector[node_position]
-                RHS=[self.Qvector[node_position-2],self.Qvector[node_position]]
+                term1=self.Qvector[node_position-2]
+                term2=self.Qvector[node_position-1]
+                RHS=[self.Qvector[node_position],new_diagram.Qvector[node_position-1]]
             LHS=(term1,term2)
             print(f'W{LHS}={"*".join(RHS)}')
         
