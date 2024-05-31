@@ -262,7 +262,10 @@ class Dynkin:
                     LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
             if node_number==sum(self.v_arr.bosons_fermions)-2:
                 #fork
-                LHS=[self.Qvector[node_position-1],self.Qvector[node_position],self.Qvector[node_position+1]]
+                if sum(self.v_arr.bosons_fermions)==3:
+                    LHS=['Q()|()',self.Qvector[node_position+1],self.Qvector[node_position+2]]
+                else:
+                    LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1],self.Qvector[node_position+2]]
             elif node_number==sum(self.v_arr.bosons_fermions)-1:
                 #spinor +
                 wronskian1=self.Qvector[node_position+1]
@@ -294,7 +297,10 @@ class Dynkin:
                     RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
             if node_number==sum(self.v_arr.bosons_fermions)-2:
                 #fork
-                RHS=[self.Qvector[node_position+1],self.Qvector[node_position+2]]
+                if sum(self.v_arr.bosons_fermions)==3:
+                    RHS=[self.Qvector[node_position+1],self.Qvector[node_position+2]]
+                else:
+                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1],self.Qvector[node_position+2]]
             elif node_number==sum(self.v_arr.bosons_fermions)-1:
                 #spinor +
                 term1=self.Qvector[node_position+1]
