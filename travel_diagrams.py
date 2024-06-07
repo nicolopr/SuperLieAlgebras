@@ -27,6 +27,13 @@ def find_Qfunctions(visited_diagrams):
                 Q_functions.append(Q_function)
     return Q_functions 
 
+def find_QQ_relations(visited_diagrams):
+    QQ_rels=[]
+    for diagram in visited_diagrams:
+        for node_no in range(1,4):
+            if diagram.QQ_relation(node_no) not in QQ_rels:
+                QQ_rels.append(diagram.QQ_relation(node_no))
+    return QQ_rels
 
 def print_visited(visited):
     for element in visited:
