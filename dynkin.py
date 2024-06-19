@@ -52,12 +52,12 @@ def get_indices_from_unique_vectors(bosons,fermions,indices,unique_vector):
         if value_vector>0:
             indices_vector[0].append(f'{no_vector-fermions+1}')
         elif value_vector<0:
-            indices_vector[0].append(f"{no_vector-fermions+1}'")
+            indices_vector[0].append(f"{no_vector-fermions+1}^")
     else:
         if value_vector>0:
             indices_vector[-1].append(f'{no_vector+1}')
         elif value_vector<0:
-            indices_vector[-1].append(f"{no_vector+1}'")
+            indices_vector[-1].append(f"{no_vector+1}^")
     return indices_vector
 
 def reorder(root_list):
@@ -284,41 +284,42 @@ class Dynkin:
                     wronskian2=new_diagram.Qvector[node_position]
                     LHS=[self.Qvector[node_position-1]]   
             RHS=(wronskian1,wronskian2)
-            print(f'W{RHS}={"*".join(LHS)}')
+            return {'Wronskian':set(RHS), 'LHS':"*".join(LHS) }
         else:
             #fermionic QQ relations
             term1=self.Qvector[node_position]
-            term2=new_diagram.Qvector[node_position]
+            term2=new_diagram.Qvector[node_position]   #these two do not go in the wronskian and are Q-functions in two different diagrams
             if sum(self.v_arr.bosons_fermions)>3:
                 if node_number==1:
-                    RHS=['Q()|()',self.Qvector[node_position+1]]
+                    RHS=['Q()|()',self.Qvector[node_position+1]] #members of wronskian, for fermionic they are in same diagram
                 elif node_number<sum(self.v_arr.bosons_fermions)-2:
             #gl tail
-                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
+                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]] #members of wronskian, for fermionic they are in same diagram
             if node_number==sum(self.v_arr.bosons_fermions)-2:
                 #fork
                 if sum(self.v_arr.bosons_fermions)==3:
-                    RHS=[self.Qvector[node_position+1],self.Qvector[node_position+2]]
+                    RHS=[self.Qvector[node_position+1],self.Qvector[node_position+2]] #members of wronskian, for fermionic they are in same diagram
                 else:
                     RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1],self.Qvector[node_position+2]]
             elif node_number==sum(self.v_arr.bosons_fermions)-1:
                 #spinor +
                 if 2 not in self.root_list[node_position+1].coeffs and -2 not in self.root_list[node_position+1].coeffs:
                     #not sp diagram
-                    term1=self.Qvector[node_position-1]
-                    term2=self.Qvector[node_position+1]
-                    RHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
+                    term1=self.Qvector[node_position+1]
+                    term2=new_diagram.Qvector[node_position] #these two do not go in the wronskian and are Q-functions in two different diagrams
+                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position]] #members of wronskian, for fermionic they are in same diagram
                 else:
-                    term1=self.Qvector[node_position-1]
-                    term2=self.Qvector[node_position+1]
-                    RHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
+                    #sp diagram
+                    term1=self.Qvector[node_position]
+                    term2=new_diagram.Qvector[node_position+1]
+                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
             elif node_number==sum(self.v_arr.bosons_fermions):
                 #spinor -
-                term1=self.Qvector[node_position-2]
-                term2=self.Qvector[node_position-1]
-                RHS=[self.Qvector[node_position],new_diagram.Qvector[node_position-1]]
+                term1=self.Qvector[node_position-1]
+                term2=new_diagram.Qvector[node_position-1]
+                RHS=[self.Qvector[node_position-2],self.Qvector[node_position]]
             LHS=(term1,term2)
-            print(f'W{LHS}={"*".join(RHS)}')
+            return {"Wronskian":set(RHS), 'LHS':"*".join(LHS)}
         
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
