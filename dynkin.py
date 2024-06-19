@@ -192,15 +192,15 @@ class Dynkin:
             indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,element))
         #fork node
         fork_node=bosons+fermions-3
-        if 2 not in self.root_list[fork_node+1].coeffs and -2 not in self.root_list[fork_node+1].coeffs:
-            #S+ node is not a long root
+        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
+            #S- node is not a long root
             unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs))
         else:
-            unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+2].coeffs))
+            unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs))
         indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1]))
         #spinor nodes
-        if 2 not in self.root_list[fork_node+1].coeffs and -2 not in self.root_list[fork_node+1].coeffs:
-            #S+ node is not a long root
+        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
+            #S- node is not a long root
             not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs)
             unique_elements_sm=unique_elements(self.root_list[fork_node+1].coeffs,self.root_list[fork_node].coeffs)
             unique_elements_sp=[-el for el in unique_elements_sm]
@@ -210,12 +210,19 @@ class Dynkin:
         else:
             #S+ node is a long root
             #terrible naming conventions here
-            not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+2].coeffs)
-            unique_elements_sm=unique_elements(self.root_list[fork_node+2].coeffs,self.root_list[fork_node].coeffs)
-            unique_elements_sp=[-el for el in unique_elements_sm]
-            temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
+            fork_indices=unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs)
+            index_fermion_node=not_unique_elements(self.root_list[fork_node+1].coeffs,self.root_list[fork_node].coeffs)
+            index_fermion_node=[-el for el in index_fermion_node]
+            long_node=[int(el/2) for el in self.root_list[-1].coeffs]
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,index_fermion_node))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,long_node))
+            # not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs) #indices from the node Qs
+            # unique_elements_sm=unique_elements(self.root_list[fork_node+2].coeffs,self.root_list[fork_node+1].coeffs)
+            # unique_elements_sm=[int(el/2) for el in unique_elements_sm]
+            # unique_elements_sp=[-el for el in unique_elements_sm]
+            # temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
+            # indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
+            # indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
         return indices
     
     def Q_indices_reorder(self):
@@ -311,10 +318,10 @@ class Dynkin:
                 else:
                     #sp diagram
                     term1=self.Qvector[node_position]
-                    term2=new_diagram.Qvector[node_position+1]
-                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
+                    term2=new_diagram.Qvector[node_position+1] #these two do not go in the wronskian and are Q-functions in two different diagrams
+                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]] #members of wronskian, for fermionic they are in same diagram
             elif node_number==sum(self.v_arr.bosons_fermions):
-                #spinor -
+                #spinor -, this is never fermionic in sp diagram so we don't consider that case
                 term1=self.Qvector[node_position-1]
                 term2=new_diagram.Qvector[node_position-1]
                 RHS=[self.Qvector[node_position-2],self.Qvector[node_position]]
