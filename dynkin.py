@@ -1,3 +1,4 @@
+import numpy as np
 from roots import Root
 from weyl import weyl
 from basis_vectors import Vector_array
@@ -93,9 +94,15 @@ class Dynkin:
         self.reps=self.reps()
         self.cartan_matrix=self.cartan_matrix()
     
+    def so_type(self):
+        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
+            return True
+        else:
+            return False
+    
     def write_indices_Q(self,list_indices,root_number):
         #no long roots
-        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
+        if self.so_type():
             string='Q(' if root_number<sum(self.v_arr.bosons_fermions)-2 else 'S('
             for index in list_indices[0]:
                 string+=index
@@ -180,49 +187,31 @@ class Dynkin:
         for element in self.root_list:
             new_root_list.append(weyl(refl_root,element))
         return Dynkin(new_varr,reorder(new_root_list))
-    
+
     def Q_indices(self):
+        roots_list=[np.array(root) for root in self.roots_coeffs]
+        if self.so_type():
+            sum_root=sum(roots_list)-(roots_list[-2]+roots_list[-1])/2
+        else:
+            sum_root=sum(roots_list)-roots_list[-1]/2
         unique_vectors,indices=[],[]
         bosons=self.v_arr.bosons_fermions[0]
         fermions=self.v_arr.bosons_fermions[1]
-        #gl-type tail
-        for i in range(bosons+fermions-3):
-            unique_vectors.append(unique_elements(self.root_list[i].coeffs,self.root_list[i+1].coeffs))
-        for element in unique_vectors:
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,element))
-        #fork node
-        fork_node=bosons+fermions-3
-        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
-            #S- node is not a long root
-            unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs))
+        for i in range(bosons+fermions-2):
+            unique_vectors.append(list(sum_root))
+            sum_root-=roots_list[i]
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1]))
+        if self.so_type():
+            unique_vectors.append(list((roots_list[-2]+roots_list[-1])/2))
+            temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1])]
+            unique_vectors.append(list(-(roots_list[-2]-roots_list[-1])/2))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_vectors[-1]))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,[-el for el in unique_vectors[-1]]))
         else:
-            unique_vectors.append(unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs))
-        indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1]))
-        #spinor nodes
-        if 2 not in self.root_list[-1].coeffs and -2 not in self.root_list[-1].coeffs:
-            #S- node is not a long root
-            not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs)
-            unique_elements_sm=unique_elements(self.root_list[fork_node+1].coeffs,self.root_list[fork_node].coeffs)
-            unique_elements_sp=[-el for el in unique_elements_sm]
-            temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
-        else:
-            #S+ node is a long root
-            #terrible naming conventions here
-            fork_indices=unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs)
-            index_fermion_node=not_unique_elements(self.root_list[fork_node+1].coeffs,self.root_list[fork_node].coeffs)
-            index_fermion_node=[-el for el in index_fermion_node]
-            long_node=[int(el/2) for el in self.root_list[-1].coeffs]
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,index_fermion_node))
-            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,long_node))
-            # not_unique_elements_sp=not_unique_elements(self.root_list[fork_node].coeffs,self.root_list[fork_node+1].coeffs) #indices from the node Qs
-            # unique_elements_sm=unique_elements(self.root_list[fork_node+2].coeffs,self.root_list[fork_node+1].coeffs)
-            # unique_elements_sm=[int(el/2) for el in unique_elements_sm]
-            # unique_elements_sp=[-el for el in unique_elements_sm]
-            # temp_indices=[get_indices_from_unique_vectors(bosons,fermions,indices,not_unique_elements_sp)]
-            # indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sp))
-            # indices.append(get_indices_from_unique_vectors(bosons,fermions,temp_indices,unique_elements_sm))
+            unique_vectors.append(list(sum_root))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1]))
+            unique_vectors.append(list(roots_list[-1]/2))
+            indices.append(get_indices_from_unique_vectors(bosons,fermions,indices,unique_vectors[-1]))
         return indices
     
     def Q_indices_reorder(self):
@@ -347,11 +336,4 @@ class Distinguished(Dynkin):
         coeff_tuple[-2]=1
         root_l.append(Root(tuple(coeff_tuple),self.v_arr))
         return root_l
-# vector_array=Vector_array((3,2))
-# distinguished=Distinguished(vector_array)
-# # distinguished.view()
-# # distinguished.weyl_on_diagram(2).view()
-
-# distinguished.QQ_relation(2)
-# distinguished.QQ_relation(3)
 
