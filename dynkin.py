@@ -246,76 +246,44 @@ class Dynkin:
     def QQ_relation(self, node_number):
         node_position=node_number-1
         new_diagram=self.weyl_on_diagram(node_number)
-        if self.root_list[node_position].length!=0:
-            #bosonic QQ relation
-            wronskian1=self.Qvector[node_position]
-            wronskian2=new_diagram.Qvector[node_position]
-            if sum(self.v_arr.bosons_fermions)>3:
-                if node_number==1:
-                    LHS=['Q()|()',self.Qvector[node_position+1]]
-                elif node_number<sum(self.v_arr.bosons_fermions)-2:
-            #gl tail
-                    LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]]
-            if node_number==sum(self.v_arr.bosons_fermions)-2:
-                #fork
-                if sum(self.v_arr.bosons_fermions)==3:
-                    LHS=['Q()|()',self.Qvector[node_position+1],self.Qvector[node_position+2]]
-                else:
-                    LHS=[self.Qvector[node_position-1],self.Qvector[node_position+1],self.Qvector[node_position+2]]
-            elif node_number==sum(self.v_arr.bosons_fermions)-1:
-                #spinor +
-                wronskian1=self.Qvector[node_position+1]
-                wronskian2=new_diagram.Qvector[node_position+1]
-                LHS=[self.Qvector[node_position-1]]    
-            elif node_number==sum(self.v_arr.bosons_fermions):
-                #spinor -
-                if 2 not in self.root_list[node_position].coeffs and -2 not in self.root_list[node_position].coeffs:
-                    #not a long root
-                    wronskian1=self.Qvector[node_position-1]
-                    wronskian2=new_diagram.Qvector[node_position-1]
-                    LHS=[self.Qvector[node_position-2]] 
-                else:
-                    #long root
-                    wronskian1=self.Qvector[node_position]
-                    wronskian2=new_diagram.Qvector[node_position]
-                    LHS=[self.Qvector[node_position-1]]   
-            RHS=(wronskian1,wronskian2)
-            return {'Wronskian':set(RHS), 'LHS':"*".join(LHS) }
-        else:
-            #fermionic QQ relations
-            term1=self.Qvector[node_position]
-            term2=new_diagram.Qvector[node_position]   #these two do not go in the wronskian and are Q-functions in two different diagrams
-            if sum(self.v_arr.bosons_fermions)>3:
-                if node_number==1:
-                    RHS=['Q()|()',self.Qvector[node_position+1]] #members of wronskian, for fermionic they are in same diagram
-                elif node_number<sum(self.v_arr.bosons_fermions)-2:
-            #gl tail
-                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]] #members of wronskian, for fermionic they are in same diagram
-            if node_number==sum(self.v_arr.bosons_fermions)-2:
-                #fork
-                if sum(self.v_arr.bosons_fermions)==3:
-                    RHS=[self.Qvector[node_position+1],self.Qvector[node_position+2]] #members of wronskian, for fermionic they are in same diagram
-                else:
-                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1],self.Qvector[node_position+2]]
-            elif node_number==sum(self.v_arr.bosons_fermions)-1:
-                #spinor +
-                if 2 not in self.root_list[node_position+1].coeffs and -2 not in self.root_list[node_position+1].coeffs:
-                    #not sp diagram
-                    term1=self.Qvector[node_position+1]
-                    term2=new_diagram.Qvector[node_position] #these two do not go in the wronskian and are Q-functions in two different diagrams
-                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position]] #members of wronskian, for fermionic they are in same diagram
-                else:
-                    #sp diagram
-                    term1=self.Qvector[node_position]
-                    term2=new_diagram.Qvector[node_position+1] #these two do not go in the wronskian and are Q-functions in two different diagrams
-                    RHS=[self.Qvector[node_position-1],self.Qvector[node_position+1]] #members of wronskian, for fermionic they are in same diagram
-            elif node_number==sum(self.v_arr.bosons_fermions):
-                #spinor -, this is never fermionic in sp diagram so we don't consider that case
-                term1=self.Qvector[node_position-1]
-                term2=new_diagram.Qvector[node_position-1]
-                RHS=[self.Qvector[node_position-2],self.Qvector[node_position]]
-            LHS=(term1,term2)
-            return {"Wronskian":set(RHS), 'LHS':"*".join(LHS)}
+        symm_cartan_row=[]
+        for root in self.root_list:
+            symm_cartan_row.append(scalarp_roots(self.root_list[node_position],root)/2)
+        RHS=[]
+        #add Qfunction to RHS only if it's connected by links in Dynkin diagram
+        for root_no in range(len(self.root_list)):
+            if symm_cartan_row[root_no]!=0 and root_no!=node_position:
+                RHS.append(self.Qvector[root_no])
+        #LHS is more case by case. GL-type tail is always the same, but for spinor nodes we have to be careful
+        if self.so_type(): #so-type diagram
+            if node_number==sum(self.v_arr.bosons_fermions)-1: #spinor node +
+                if self.root_list[node_position].length!=0: #bosonic QQ
+                    LHS=[self.Qvector[-1],new_diagram.Qvector[-1]] #takes Q functions on spinor - nodes
+                else: #fermionic QQ
+                    LHS=[self.Qvector[-1],new_diagram.Qvector[-2]] #takes Q functions on spinor - node and short root of sp diagram
+                    RHS=[]
+                    #add Qfunction to RHS only if it's connected by links in Dynkin diagram
+                    for root_no in range(len(self.root_list)):
+                        if symm_cartan_row[root_no]!=0 and root_no!=node_position:
+                            RHS.append(new_diagram.Qvector[root_no])
+            elif node_number==sum(self.v_arr.bosons_fermions): #spinor node -
+                if self.root_list[node_position].length!=0: #bosonic QQ
+                    LHS=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + nodes
+                else: #fermionic QQ
+                    LHS=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + node and short root of sp diagram
+                    RHS=[new_diagram.Qvector[-3],new_diagram.Qvector[-1]]
+            else:
+                LHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]] #gl tail and fork
+        else: #sp-type diagram
+            if node_number==sum(self.v_arr.bosons_fermions)-1 and self.root_list[node_position].length==0: #fermionic QQ at short root
+                if self.Qvector[-1]==new_diagram.Qvector[-2]:
+                    LHS=[self.Qvector[-2],new_diagram.Qvector[-1]]
+                elif self.Qvector[-1]==new_diagram.Qvector[-1]:
+                    LHS=[self.Qvector[-2],new_diagram.Qvector[-2]]
+            else:
+                LHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
+
+        return {"Wronskian":set(RHS), 'LHS':set(LHS)}
         
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
