@@ -258,9 +258,9 @@ class Dynkin:
         if self.so_type(): #so-type diagram
             if node_number==sum(self.v_arr.bosons_fermions)-1: #spinor node +
                 if self.root_list[node_position].length!=0: #bosonic QQ
-                    product_Q=set(conn_Qfunctions)
+                    product_Q=conn_Qfunctions
                     Wronskian=[self.Qvector[-1],new_diagram.Qvector[-1]] #takes Q functions on spinor - nodes
-                    shifts=[symm_cartan_row[node_number],-symm_cartan_row[node_number]]
+                    shifts=[symm_cartan_row[node_position],-symm_cartan_row[node_position]]
                 else: #fermionic QQ
                     product_Q=[self.Qvector[-1],new_diagram.Qvector[-2]] #takes Q functions on spinor - node and short root of sp diagram
                     Wronskian=[]
@@ -271,27 +271,55 @@ class Dynkin:
                     shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
             elif node_number==sum(self.v_arr.bosons_fermions): #spinor node -
                 if self.root_list[node_position].length!=0: #bosonic QQ
-                    product_Q=set(conn_Qfunctions)
+                    product_Q=conn_Qfunctions
                     Wronskian=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + nodes
-                    shifts=[symm_cartan_row[node_number],-symm_cartan_row[node_number]]
+                    shifts=[symm_cartan_row[node_position],-symm_cartan_row[node_position]]
                 else: #fermionic QQ
                     product_Q=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + node and short root of sp diagram
                     Wronskian=[new_diagram.Qvector[-3],new_diagram.Qvector[-1]]
+                    shifts=[self.cartan_matrix[node_position][node_position-2],self.cartan_matrix[node_position][node_position-1]]
+            else: #gl tail and fork
+                if self.root_list[node_position].length!=0: #bosonic QQ
+                    product_Q=conn_Qfunctions
+                    Wronskian=[self.Qvector[node_position],new_diagram.Qvector[node_position]] 
+                    shifts=[2*symm_cartan_row[node_position],-2*symm_cartan_row[node_position]]
+                else:
+                    Wronskian=conn_Qfunctions
+                    product_Q=[self.Qvector[node_position],new_diagram.Qvector[node_position]] 
                     shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
-            else:
-                Wronskian=[self.Qvector[node_position],new_diagram.Qvector[node_position]] #gl tail and fork
-                shifts=[symm_cartan_row[node_number],-symm_cartan_row[node_number]]
         else: #sp-type diagram
             if node_number==sum(self.v_arr.bosons_fermions)-1 and self.root_list[node_position].length==0: #fermionic QQ at short root
                 if self.Qvector[-1]==new_diagram.Qvector[-2]:
-                    product_Q=[self.Qvector[-2],new_diagram.Qvector[-1]]
+                    Wronskian=[self.Qvector[-2],new_diagram.Qvector[-1]]
+                    product_Q=conn_Qfunctions
+                    shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
                 elif self.Qvector[-1]==new_diagram.Qvector[-1]:
-                    product_Q=[self.Qvector[-2],new_diagram.Qvector[-2]]
-            else:
-                product_Q=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
-
+                    Wronskian=[self.Qvector[-2],new_diagram.Qvector[-2]]
+                    product_Q=conn_Qfunctions
+                    shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
+            else: #gl tail and fork
+                if self.root_list[node_position].length!=0: #bosonic QQ
+                    product_Q=conn_Qfunctions
+                    Wronskian=[self.Qvector[node_position],new_diagram.Qvector[node_position]] 
+                    shifts=[2*symm_cartan_row[node_position],-2*symm_cartan_row[node_position]]
+                else:
+                    Wronskian=conn_Qfunctions
+                    product_Q=[self.Qvector[node_position],new_diagram.Qvector[node_position]] 
+                    shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
         return {"Wronskian":Wronskian, 'shifts':shifts, 'LHS':product_Q}
-        
+    
+    def write_QQ(self,node_number):
+        QQ_dictionary=self.QQ_relation(node_number)
+        Wronskian=QQ_dictionary['Wronskian']
+        shifts=QQ_dictionary['shifts']
+        if len(Wronskian)==3:
+            shifts.append(shifts[-1])
+        product_Q=sorted(QQ_dictionary['LHS'])
+        LHS='*'.join(product_Q)
+        Wronskian_shifts=sorted([Wronskian[i]+f'**[{str(int(shifts[i]))}]' for i in range(len(Wronskian))])
+        RHS=','.join(Wronskian_shifts)
+        return f'{LHS}=Wronskian[{RHS}]'
+    
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
         self.v_arr=v_arr

@@ -18,12 +18,12 @@ def travel(diagram):
 def find_Qfunctions(visited_diagrams):
     Q_functions=[]
     for diagram in visited_diagrams:
-        skip=False
-        if 2 in diagram.root_list[-1].coeffs or -2 in diagram.root_list[-1].coeffs:
-            #skip long roots diagram
-            skip=True
+        # skip=False
+        # if 2 in diagram.root_list[-1].coeffs or -2 in diagram.root_list[-1].coeffs:
+        #     #skip long roots diagram
+        #     skip=True
         for Q_function in diagram.Qvector:
-            if Q_function not in Q_functions and not skip:
+            if Q_function not in Q_functions: #and not skip:
                 Q_functions.append(Q_function)
     return Q_functions 
 
@@ -33,6 +33,20 @@ def find_QQ_relations(visited_diagrams):
         for node_no in range(1,4):
             if diagram.QQ_relation(node_no) not in QQ_rels:
                 QQ_rels.append(diagram.QQ_relation(node_no))
+    return QQ_rels
+
+def find_Qfunction_node(visited_diagrams,node_position):
+    Q_functions=[]
+    for diagram in visited_diagrams:
+        if diagram.Qvector[node_position] not in Q_functions:
+            Q_functions.append(diagram.Qvector[node_position])
+    return Q_functions 
+
+def find_QQrels_node(visited_diagrams,node_position):
+    QQ_rels=[]
+    for diagram in visited_diagrams:
+        if diagram.write_QQ(node_position) not in QQ_rels:
+            QQ_rels.append(diagram.write_QQ(node_position))
     return QQ_rels
 
 def print_visited(visited):
