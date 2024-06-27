@@ -249,41 +249,48 @@ class Dynkin:
         symm_cartan_row=[]
         for root in self.root_list:
             symm_cartan_row.append(scalarp_roots(self.root_list[node_position],root)/2)
-        RHS=[]
+        conn_Qfunctions=[]
         #add Qfunction to RHS only if it's connected by links in Dynkin diagram
         for root_no in range(len(self.root_list)):
             if symm_cartan_row[root_no]!=0 and root_no!=node_position:
-                RHS.append(self.Qvector[root_no])
+                conn_Qfunctions.append(self.Qvector[root_no])
         #LHS is more case by case. GL-type tail is always the same, but for spinor nodes we have to be careful
         if self.so_type(): #so-type diagram
             if node_number==sum(self.v_arr.bosons_fermions)-1: #spinor node +
                 if self.root_list[node_position].length!=0: #bosonic QQ
-                    LHS=[self.Qvector[-1],new_diagram.Qvector[-1]] #takes Q functions on spinor - nodes
+                    product_Q=set(conn_Qfunctions)
+                    Wronskian=[self.Qvector[-1],new_diagram.Qvector[-1]] #takes Q functions on spinor - nodes
+                    shifts=[symm_cartan_row[node_number],-symm_cartan_row[node_number]]
                 else: #fermionic QQ
-                    LHS=[self.Qvector[-1],new_diagram.Qvector[-2]] #takes Q functions on spinor - node and short root of sp diagram
-                    RHS=[]
+                    product_Q=[self.Qvector[-1],new_diagram.Qvector[-2]] #takes Q functions on spinor - node and short root of sp diagram
+                    Wronskian=[]
                     #add Qfunction to RHS only if it's connected by links in Dynkin diagram
                     for root_no in range(len(self.root_list)):
                         if symm_cartan_row[root_no]!=0 and root_no!=node_position:
-                            RHS.append(new_diagram.Qvector[root_no])
+                            Wronskian.append(new_diagram.Qvector[root_no])
+                    shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
             elif node_number==sum(self.v_arr.bosons_fermions): #spinor node -
                 if self.root_list[node_position].length!=0: #bosonic QQ
-                    LHS=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + nodes
+                    product_Q=set(conn_Qfunctions)
+                    Wronskian=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + nodes
+                    shifts=[symm_cartan_row[node_number],-symm_cartan_row[node_number]]
                 else: #fermionic QQ
-                    LHS=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + node and short root of sp diagram
-                    RHS=[new_diagram.Qvector[-3],new_diagram.Qvector[-1]]
+                    product_Q=[self.Qvector[-2],new_diagram.Qvector[-2]] #takes Q functions on spinor + node and short root of sp diagram
+                    Wronskian=[new_diagram.Qvector[-3],new_diagram.Qvector[-1]]
+                    shifts=[self.cartan_matrix[node_position][node_position-1],self.cartan_matrix[node_position][node_position+1]]
             else:
-                LHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]] #gl tail and fork
+                Wronskian=[self.Qvector[node_position],new_diagram.Qvector[node_position]] #gl tail and fork
+                shifts=[symm_cartan_row[node_number],-symm_cartan_row[node_number]]
         else: #sp-type diagram
             if node_number==sum(self.v_arr.bosons_fermions)-1 and self.root_list[node_position].length==0: #fermionic QQ at short root
                 if self.Qvector[-1]==new_diagram.Qvector[-2]:
-                    LHS=[self.Qvector[-2],new_diagram.Qvector[-1]]
+                    product_Q=[self.Qvector[-2],new_diagram.Qvector[-1]]
                 elif self.Qvector[-1]==new_diagram.Qvector[-1]:
-                    LHS=[self.Qvector[-2],new_diagram.Qvector[-2]]
+                    product_Q=[self.Qvector[-2],new_diagram.Qvector[-2]]
             else:
-                LHS=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
+                product_Q=[self.Qvector[node_position],new_diagram.Qvector[node_position]]
 
-        return {"Wronskian":set(RHS), 'LHS':set(LHS)}
+        return {"Wronskian":Wronskian, 'shifts':shifts, 'LHS':product_Q}
         
 class Distinguished(Dynkin):
     def __init__(self,v_arr):
